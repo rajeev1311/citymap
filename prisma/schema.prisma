@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ItemType {
+  BUSINESS
+  COLLEGE
+  SALON
+  CINEMA
+  TOURIST_PLACE
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String
+  email         String       @unique
+  passwordHash  String
+  role          Role         @default(USER)
+  currentCityId String?
+  avatar        String?
+  currentCity   City?        @relation(fields: [currentCityId], references: [id], onDelete: SetNull)
+  reviews       Review[]
+  savedPlaces   SavedPlace[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([email])
+}
+
+model City {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  state         String
+  country       String         @default("India")
+  description   String         @db.Text
+  image         String
+  latitude      Float
+  longitude     Float
+  businesses    Business[]
+  colleges      College[]
+  salons        Salon[]
+  cinemas       Cinema[]
+  touristPlaces TouristPlace[]
+  users         User[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([name])
+}
+
+model Business {
+  id           String   @id @default(cuid())
+  cityId       String
+  city         City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name         String
+  category     String
+  description  String   @db.Text
+  address      String
+  phone        String?
+  email        String?
+  website      String?
+  image        String
+  rating       Float    @default(0.0)
+  reviewCount  Int      @default(0)
+  latitude     Float?
+  longitude    Float?
+  openingHours String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([cityId])
+  @@index([category])
+}
+
+model College {
+  id          String   @id @default(cuid())
+  cityId      String
+  city        City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name        String
+  type        String
+  description String   @db.Text
+  address     String
+  phone       String?
+  website     String?
+  image       String
+  rating      Float    @default(0.0)
+  reviewCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cityId])
+  @@index([type])
+}
+
+model Salon {
+  id           String   @id @default(cuid())
+  cityId       String
+  city         City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name         String
+  description  String   @db.Text
+  services     String
+  address      String
+  phone        String?
+  website      String?
+  image        String
+  rating       Float    @default(0.0)
+  reviewCount  Int      @default(0)
+  openingHours String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([cityId])
+}
+
+model Cinema {
+  id          String   @id @default(cuid())
+  cityId      String
+  city        City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name        String
+  description String   @db.Text
+  address     String
+  phone       String?
+  website     String?
+  image       String
+  rating      Float    @default(0.0)
+  reviewCount Int      @default(0)
+  facilities  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cityId])
+}
+
+model TouristPlace {
+  id           String   @id @default(cuid())
+  cityId       String
+  city         City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name         String
+  category     String
+  description  String   @db.Text
+  address      String
+  image        String
+  rating       Float    @default(0.0)
+  reviewCount  Int      @default(0)
+  openingHours String?
+  entryFee     String?
+  latitude     Float?
+  longitude    Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([cityId])
+  @@index([category])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemType  ItemType
+  itemId    String
+  rating    Int
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([itemType, itemId])
+  @@index([userId])
+}
+
+model SavedPlace {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemType  ItemType
+  itemId    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, itemType, itemId])
+  @@index([userId])
+}
